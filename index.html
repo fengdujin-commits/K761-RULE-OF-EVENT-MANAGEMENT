@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>K761 小榜上分规则 / Mini Leaderboard Rules</title>
+<style>
+  :root{
+    --ink:#1e2227; --sub:#5c626b; --line:#e9ebee; --bg:#f1f2f4;
+    --red:#c8102e; --red-deep:#8d0a20; --red-soft:#fdf1f3;
+    --f-sans:"Microsoft YaHei UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",
+      "Source Han Sans SC","Noto Sans CJK SC","Malgun Gothic","Apple SD Gothic Neo",
+      system-ui,-apple-system,"Segoe UI",sans-serif;
+    --f-serif:"Songti SC","STSong","SimSun","Noto Serif CJK SC","Source Han Serif SC",Georgia,serif;
+    --f-deng:"DengXian","等线","Microsoft YaHei UI","PingFang SC",sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0; padding:44px 20px 64px;
+    background:radial-gradient(1200px 480px at 50% -160px,#e9ebee 0%,var(--bg) 62%) fixed;
+    color:var(--ink);
+    font-family:var(--f-sans);
+    font-size:15px; line-height:1.9;
+    font-synthesis:none;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    text-rendering:optimizeLegibility;
+  }
+  body[data-font="serif"]{font-family:var(--f-serif);}
+  body[data-font="deng"]{font-family:var(--f-deng);}
+  .sheet{
+    max-width:720px; margin:0 auto; background:#fff; border-radius:18px;
+    padding:30px 46px 34px;
+    box-shadow:0 1px 1px rgba(16,24,40,.03), 0 6px 16px rgba(16,24,40,.05), 0 24px 56px -12px rgba(16,24,40,.14);
+  }
+
+  /* 顶部：品牌 + 字体切换 + 语言切换 */
+  .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; row-gap:10px; margin-bottom:24px;}
+  .brand{display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; letter-spacing:.14em; color:#2a2e35;}
+  .brand i{width:7px; height:7px; border-radius:50%; background:var(--red); display:inline-block;}
+  .tools{display:flex; align-items:center; gap:8px; margin-left:auto;}
+  .font-btn{
+    appearance:none; border:1px solid #e6e8eb; background:#fff; cursor:pointer;
+    font:inherit; font-size:12px; font-weight:600; color:#5c626b;
+    padding:6px 11px; border-radius:9px; line-height:1.25; white-space:nowrap;
+    transition:border-color .16s, color .16s, background .16s;
+  }
+  .font-btn:hover{border-color:#d3d7dc; color:#23272e;}
+  .font-btn span{opacity:.55; margin-right:4px; font-weight:500;}
+  .lang-switch{display:inline-flex; gap:2px; padding:3px; background:#f2f3f5; border-radius:11px; flex:none;}
+  .lang-switch button{
+    appearance:none; border:0; background:transparent; cursor:pointer;
+    font:inherit; font-size:12.5px; font-weight:600; color:#6b7280;
+    padding:6px 13px; border-radius:9px; line-height:1.25; white-space:nowrap;
+    transition:background .16s, color .16s, box-shadow .16s;
+  }
+  .lang-switch button:hover{color:#23272e;}
+  .lang-switch button.on{background:#fff; color:var(--red); box-shadow:0 1px 2px rgba(16,24,40,.13);}
+
+  .lang{display:none;}
+  .lang.on{display:block; animation:fade .2s ease-out;}
+  @keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
+
+  .eyebrow{font-size:11.5px; letter-spacing:.15em; color:var(--red); font-weight:700; margin-bottom:11px;}
+  h1{font-size:30px; line-height:1.28; margin:0 0 14px; letter-spacing:-.5px; font-weight:700;}
+  .lede{font-size:14.5px; color:var(--sub); line-height:1.9; margin:0 0 16px; letter-spacing:.01em;}
+  .meta{
+    display:inline-block; font-size:11.5px; color:#6f757f; font-weight:600;
+    background:#f6f7f8; border:1px solid #eef0f2; border-radius:8px;
+    padding:5px 11px; margin:0 0 6px; letter-spacing:.02em;
+  }
+  .headrule{height:1px; background:linear-gradient(90deg,var(--red) 0%, #f0d3d8 26%, var(--line) 62%); margin:18px 0 0;}
+
+  section{padding:26px 0; border-bottom:1px solid var(--line);}
+  section:last-of-type{border-bottom:none; padding-bottom:4px;}
+  h2{
+    font-size:16.5px; margin:0 0 13px; letter-spacing:-.1px; font-weight:700;
+    display:flex; align-items:baseline; gap:10px;
+  }
+  h2 .n{
+    font-size:11px; font-weight:700; color:var(--red); letter-spacing:.06em;
+    font-variant-numeric:tabular-nums; opacity:.85;
+  }
+  h2 em{font-style:normal; font-size:11.5px; color:#a8adb6; font-weight:600; letter-spacing:.05em;}
+  p{font-size:15px; line-height:1.9; margin:0 0 9px; color:#22262c; letter-spacing:.012em;}
+  p:last-child{margin-bottom:0;}
+  b{font-weight:700; color:#000;}
+
+  .rows{margin:2px 0 0;}
+  .row{
+    display:flex; gap:14px; padding:10px 0; font-size:15px; line-height:1.85;
+    letter-spacing:.012em; border-bottom:1px dashed #f0f1f3;
+  }
+  .row:last-child{border-bottom:none;}
+  .row .k{flex:0 0 128px; color:#4a505a; font-weight:600; font-size:14.5px;}
+  .row .v{flex:1; color:#2b3038;}
+  .row .v b{color:#000;}
+
+  .chip{
+    display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:.05em;
+    padding:2px 8px; border-radius:6px; margin-right:8px; vertical-align:1.5px;
+  }
+  .chip.in{background:var(--red-soft); color:#b00e28;}
+  .chip.out{background:#f1f2f4; color:#6b7280;}
+  .chip.watch{background:#1d2026; color:#fff;}
+  .chip.na{background:#f4f5f7; color:#9aa0aa;}
+
+  .note{
+    margin-top:18px; padding:14px 18px; background:#fafbfc;
+    border-left:3px solid var(--red); border-radius:0 9px 9px 0;
+    font-size:14px; line-height:1.85; color:#3a4049; letter-spacing:.012em;
+  }
+
+  /* 处罚阶梯 */
+  .steps{margin:14px 0 0; position:relative; padding-left:0;}
+  .steps:before{
+    content:""; position:absolute; left:13px; top:18px; bottom:18px; width:2px;
+    background:linear-gradient(180deg,#f6d5db 0%,#e79aa7 45%,var(--red-deep) 100%); border-radius:2px;
+  }
+  .step{display:flex; gap:15px; padding:9px 0; position:relative;}
+  .step .b{
+    flex:0 0 28px; height:28px; border-radius:50%; z-index:1;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12.5px; font-weight:700; background:#fff; color:var(--red);
+    border:2px solid #eeb4bf;
+  }
+  .step.s2 .b{background:#e0314b; border-color:#e0314b; color:#fff;}
+  .step.s3 .b{background:var(--red-deep); border-color:var(--red-deep); color:#fff;}
+  .step .body{flex:1; padding-top:1px;}
+  .step .t{font-size:15px; font-weight:700; color:#000; line-height:1.55;}
+  .step .d{font-size:12.5px; color:#8b909a; margin-top:3px; line-height:1.6;}
+
+  .foot{
+    margin-top:26px; padding-top:16px; border-top:1px solid var(--line);
+    font-size:11.5px; color:#a2a7b0; line-height:1.85;
+  }
+
+  @media (max-width:600px){
+    body{padding:14px 9px 30px; background:var(--bg);}
+    .sheet{padding:20px 19px 24px; border-radius:14px;}
+    h1{font-size:24px; letter-spacing:-.5px;}
+    .lede{font-size:13.5px;}
+    .row{flex-direction:column; gap:3px; padding:9px 0;}
+    .row .k{flex:none;}
+    .lang-switch button{padding:6px 10px; font-size:11.5px;}
+    .font-btn{padding:6px 9px; font-size:11.5px;}
+    .brand{font-size:11px; letter-spacing:.1em;}
+    section{padding:22px 0;}
+  }
+  @media print{
+    body{background:#fff; padding:0;}
+    .sheet{box-shadow:none; border-radius:0; padding:12px 4px; max-width:none;}
+    .topbar{display:none;}
+    section{page-break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div class="topbar">
+    <div class="brand"><i></i>K761</div>
+    <div class="tools">
+      <button type="button" id="fontBtn" class="font-btn" title="切换字体 / Font"><span>Aa</span>黑体</button>
+      <div class="lang-switch" role="tablist" aria-label="Language">
+        <button type="button" data-set="zh" class="on" role="tab">中文</button>
+        <button type="button" data-set="en" role="tab">English</button>
+        <button type="button" data-set="kr" role="tab">한국어</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 中文 ==================== -->
+  <div class="lang on" data-lang="zh">
+    <div class="eyebrow">KINGDOM 761 · 小榜上分规则</div>
+    <h1>小榜前 10 名怎么分</h1>
+    <p class="lede">小榜前 10 名是按备战贡献分的。你在备战榜上排得越前，能抢的名次越宽、次数越多。没进前 100 的，只能领基础任务奖励。</p>
+    <p class="meta">适用：每个 KvK 周期（约 4 周）</p>
+    <div class="headrule"></div>
+
+    <section>
+      <h2><span class="n">01</span>哪些活动算小榜<em>适用范围</em></h2>
+      <div class="rows">
+        <div class="row"><div class="k">所有海岛碎片活动</div><div class="v"><span class="chip in">纳入</span>凡奖励含海岛碎片的活动，都按本规则分配前 10 名</div></div>
+        <div class="row"><div class="k">击杀活动</div><div class="v"><span class="chip out">排除</span>自由竞争，不排班、不核算次数</div></div>
+        <div class="row"><div class="k">野兽活动</div><div class="v"><span class="chip out">排除</span>自由竞争，不排班、不核算次数</div></div>
+        <div class="row"><div class="k">至高王国</div><div class="v"><span class="chip watch">监控</span>前 10 名同样按备战名次分配，且会被核查</div></div>
+        <div class="row"><div class="k">假日礼包活动</div><div class="v"><span class="chip na">不适用</span>不在本规则范围内</div></div>
+      </div>
+      <div class="note">一句话：<b>出海岛碎片的榜都要守规则，击杀和野兽除外，假日礼包不算。</b></div>
+    </section>
+
+    <section>
+      <h2><span class="n">02</span>进了备战前 100<em>看排名给名额</em></h2>
+      <div class="rows">
+        <div class="row"><div class="k">前 10 名</div><div class="v"><b>1-10 名</b>都可以抢，<b>次数不限</b></div></div>
+        <div class="row"><div class="k">11-20 名</div><div class="v"><b>1-10 名</b>都可以抢，每个周期 <b>3 次</b></div></div>
+        <div class="row"><div class="k">21-50 名</div><div class="v"><b>1-10 名</b>都可以抢，每个周期 <b>2 次</b></div></div>
+        <div class="row"><div class="k">51-100 名</div><div class="v"><b>1-10 名</b>都可以抢，每个周期 <b>1 次</b></div></div>
+      </div>
+      <div class="note">名额只看备战排名，不看战力，也不看平时贡献。</div>
+    </section>
+
+    <section>
+      <h2><span class="n">03</span>没进前 100<em>两种例外</em></h2>
+      <p>如果你有 <b>R4 身份</b>，即使一点备战分都没有，也可以随时上小榜，但<b>只能抢 6-10 名</b>，次数不限。</p>
+      <p>如果你的 <b>秘境排在前 20</b>，即使一点备战分都没有，也可以上小榜，但<b>只能抢 1-5 名</b>，每个周期 <b>2 次</b>。</p>
+      <p>这两种都不满足的，就只能领基础任务奖励。</p>
+    </section>
+
+    <section>
+      <h2><span class="n">04</span>顺序怎么算</h2>
+      <p><b>1　优先级</b>　备战名次 ＞ R4 身份 ＞ 秘境前 20。这是几个人争同一个小榜名次时，谁先上的顺序。</p>
+      <p><b>2　名额不叠加</b>　一个人只按一个档结算。档次有重复时按最高档：既是前 50 又是前 100 的，按前 50。</p>
+      <p><b>3　唯一的例外</b>　没有备战分，但既是 R4、又是秘境前 20 的，两种福利<b>自选其一</b>：选 R4 就是 6-10 名不限次，选秘境就是 1-5 名每周期 2 次。选哪个自己定，选定后按那个档结算。</p>
+      <p><b>4　刚性需求提前协商</b>　例如小鸡目前第二、深渊需要第一，结算前一天报备协商：“深渊这期需要第一，你这次能否让到第二？”谈好的结果提前一天在群里说定，别留到结算时抢。</p>
+      <p>次数按每个 KvK 周期算，不按自然月。</p>
+    </section>
+
+    <section>
+      <h2><span class="n">05</span>违规处罚<em>逐级升级</em></h2>
+      <p>超出授权名次、或在没有名额的情况下抢占前 10 名，按下面三级处理。<b>同一周期内连续违规，逐级升级。</b></p>
+      <div class="steps">
+        <div class="step s1"><div class="b">1</div><div class="body"><div class="t">警告，并踢出联盟 2 天</div><div class="d">第一次违规</div></div></div>
+        <div class="step s2"><div class="b">2</div><div class="body"><div class="t">分数再次变动，攻击其城堡 1-3 次</div><div class="d">第二次违规</div></div></div>
+        <div class="step s3"><div class="b">3</div><div class="body"><div class="t">分数再变动，直接攻击到服气为止</div><div class="d">第三次违规 · 不设上限</div></div></div>
+      </div>
+      <div class="note">判定依据：结算前后的榜单截图对比，分数出现未经许可的上升即视为违规。有异议的，结算当天在群里提出，事后不再改判。</div>
+    </section>
+
+    <section>
+      <h2><span class="n">06</span>其他</h2>
+      <p>第 11 名以后<b>自由参与</b>，不排班、不考核，拿满基础奖励就行。</p>
+      <p>次数用完后还能上，但只能落在<b>第 11 名以后</b>。</p>
+      <p>每期结算后核对名次，超出范围按上面三级处罚处理。</p>
+    </section>
+
+    <div class="foot">K761 联盟管理 · 档位以每周期归档的备战榜截图为唯一依据</div>
+  </div>
+
+  <!-- ==================== English ==================== -->
+  <div class="lang" data-lang="en">
+    <div class="eyebrow">KINGDOM 761 · ALLIANCE POLICY</div>
+    <h1>Mini Leaderboard: Top 10 Allocation</h1>
+    <p class="lede">Top-10 spots on mini leaderboards are allocated by KvK Prep contribution. Only players inside the Prep top 100 are eligible for a top-10 spot; everyone else can claim basic mission rewards.</p>
+    <p class="meta">Applies per KvK cycle (about 4 weeks)</p>
+    <div class="headrule"></div>
+
+    <section>
+      <h2><span class="n">01</span>Which events count<em>Scope</em></h2>
+      <div class="rows">
+        <div class="row"><div class="k">All Island Fragment events</div><div class="v"><span class="chip in">Covered</span>Any event that rewards Island Fragments follows this top-10 allocation</div></div>
+        <div class="row"><div class="k">Kill event</div><div class="v"><span class="chip out">Excluded</span>Free competition — no assignment, no use tracking</div></div>
+        <div class="row"><div class="k">Beast event</div><div class="v"><span class="chip out">Excluded</span>Free competition — no assignment, no use tracking</div></div>
+        <div class="row"><div class="k">Supreme Kingdom</div><div class="v"><span class="chip watch">Monitored</span>Top 10 is allocated the same way, and will be checked</div></div>
+        <div class="row"><div class="k">Holiday Gift Pack</div><div class="v"><span class="chip na">N/A</span>Outside this policy</div></div>
+      </div>
+      <div class="note">In short: <b>any board that pays Island Fragments follows the rules. Kill and Beast are exempt. Holiday Gift Pack does not count.</b></div>
+    </section>
+
+    <section>
+      <h2><span class="n">02</span>Inside the Prep top 100<em>Allocated by rank</em></h2>
+      <div class="rows">
+        <div class="row"><div class="k">Rank 1-10</div><div class="v">Ranks <b>1-10</b>, <b>unlimited uses</b></div></div>
+        <div class="row"><div class="k">Rank 11-20</div><div class="v">Ranks <b>1-10</b>, <b>3 uses</b> per cycle</div></div>
+        <div class="row"><div class="k">Rank 21-50</div><div class="v">Ranks <b>1-10</b>, <b>2 uses</b> per cycle</div></div>
+        <div class="row"><div class="k">Rank 51-100</div><div class="v">Ranks <b>1-10</b>, <b>1 use</b> per cycle</div></div>
+      </div>
+      <div class="note">Allocation is based on Prep rank only — not on power, and not on regular contribution.</div>
+    </section>
+
+    <section>
+      <h2><span class="n">03</span>Outside the top 100<em>Two exceptions</em></h2>
+      <p>If you hold an <b>R4 position</b>, you may join any time even with zero Prep points — but only at <b>ranks 6-10</b>, with unlimited uses.</p>
+      <p>If you are in the <b>Mystic Trial top 20</b>, you may join without Prep points — but only at <b>ranks 1-5</b>, <b>2 uses</b> per cycle.</p>
+      <p>If neither applies, you can claim basic mission rewards only.</p>
+    </section>
+
+    <section>
+      <h2><span class="n">04</span>How conflicts are resolved</h2>
+      <p><b>1　Priority</b>　Prep rank &gt; R4 &gt; Mystic Trial top 20. This is the order used when several people want the same spot.</p>
+      <p><b>2　No stacking</b>　Each player is settled under one tier only. When tiers overlap, the higher one applies — e.g. top 50 and top 100 both matching means top 50.</p>
+      <p><b>3　The one exception</b>　No Prep points, but <b>R4 and Mystic Trial top 20 at the same time</b>: you <b>pick one</b>. Choose R4 for ranks 6-10 with unlimited uses, or Mystic Trial for ranks 1-5 twice per cycle. You settle under whichever you choose.</p>
+      <p><b>4　Hard rank requirements</b>　For example, 「小鸡」 is currently 2nd and 「深渊」 needs 1st. Report and negotiate one day before settlement: “深渊 needs 1st this cycle. Could you take 2nd just this once?” Agree on it a day ahead and post the outcome, so it doesn't turn into a scramble at settlement.</p>
+      <p>Uses are counted per KvK cycle, not per calendar month.</p>
+    </section>
+
+    <section>
+      <h2><span class="n">05</span>Penalties<em>Escalating</em></h2>
+      <p>Taking a spot outside your allowed range — or taking a top-10 spot with no allocation at all — is handled in three escalating steps. <b>Repeat offences within the same cycle escalate.</b></p>
+      <div class="steps">
+        <div class="step s1"><div class="b">1</div><div class="body"><div class="t">Warning, plus removal from the alliance for 2 days</div><div class="d">First offence</div></div></div>
+        <div class="step s2"><div class="b">2</div><div class="body"><div class="t">Score changes again — castle attacked 1-3 times</div><div class="d">Second offence</div></div></div>
+        <div class="step s3"><div class="b">3</div><div class="body"><div class="t">Score changes again — attacked until you back down</div><div class="d">Third offence · no fixed limit</div></div></div>
+      </div>
+      <div class="note">Evidence: the leaderboard screenshots taken before and after settlement. Any unapproved rise in score counts as a violation. If you disagree, raise it on settlement day — no re-judging afterwards.</div>
+    </section>
+
+    <section>
+      <h2><span class="n">06</span>Other</h2>
+      <p>Rank 11 and below is <b>open participation</b> — no assignment, no review, just collect the basic mission rewards.</p>
+      <p>After using up your entries you can still join, but only at <b>rank 11 or below</b>.</p>
+      <p>Ranks are checked after each settlement; going outside your allowed range is handled by the three steps above.</p>
+    </section>
+
+    <div class="foot">K761 Alliance Policy · Tier is determined solely by the archived Prep leaderboard screenshot for each cycle</div>
+  </div>
+
+  <!-- ==================== 한국어 ==================== -->
+  <div class="lang" data-lang="kr">
+    <div class="eyebrow">KINGDOM 761 · 동맹 운영 규칙</div>
+    <h1>소규모 랭킹 상위 10위 배분 규칙</h1>
+    <p class="lede">소규모 랭킹 상위 10위는 전쟁 준비 기여도로 배분합니다. 전쟁 준비 랭킹 100위 안에 들어야 10위 이내를 노릴 수 있고, 못 들면 기본 임무 보상만 받습니다.</p>
+    <p class="meta">적용: KvK 주기마다 (약 4주)</p>
+    <div class="headrule"></div>
+
+    <section>
+      <h2><span class="n">01</span>적용되는 활동<em>범위</em></h2>
+      <div class="rows">
+        <div class="row"><div class="k">아일랜드 조각 활동 전체</div><div class="v"><span class="chip in">적용</span>아일랜드 조각을 보상으로 주는 활동은 모두 이 규칙으로 10위 이내를 배분합니다</div></div>
+        <div class="row"><div class="k">킬 이벤트</div><div class="v"><span class="chip out">제외</span>자유 경쟁, 배정도 횟수 계산도 없음</div></div>
+        <div class="row"><div class="k">비스트 이벤트</div><div class="v"><span class="chip out">제외</span>자유 경쟁, 배정도 횟수 계산도 없음</div></div>
+        <div class="row"><div class="k">최고 왕국</div><div class="v"><span class="chip watch">모니터링</span>10위 이내는 동일하게 전쟁 준비 순위로 배분하며 점검합니다</div></div>
+        <div class="row"><div class="k">홀리데이 기프트 팩</div><div class="v"><span class="chip na">해당 없음</span>이 규칙의 범위 밖</div></div>
+      </div>
+      <div class="note">한 줄 요약: <b>아일랜드 조각이 나오는 랭킹은 규칙을 지켜야 하고, 킬과 비스트는 예외이며, 홀리데이 기프트 팩은 해당되지 않습니다.</b></div>
+    </section>
+
+    <section>
+      <h2><span class="n">02</span>전쟁 준비 100위 이내<em>순위에 따라 배정</em></h2>
+      <div class="rows">
+        <div class="row"><div class="k">1-10위</div><div class="v"><b>1-10위</b> 모두 가능, <b>횟수 무제한</b></div></div>
+        <div class="row"><div class="k">11-20위</div><div class="v"><b>1-10위</b> 모두 가능, 주기당 <b>3회</b></div></div>
+        <div class="row"><div class="k">21-50위</div><div class="v"><b>1-10위</b> 모두 가능, 주기당 <b>2회</b></div></div>
+        <div class="row"><div class="k">51-100위</div><div class="v"><b>1-10위</b> 모두 가능, 주기당 <b>1회</b></div></div>
+      </div>
+      <div class="note">배정은 오직 전쟁 준비 순위만 봅니다. 전투력이나 평소 기여도는 보지 않습니다.</div>
+    </section>
+
+    <section>
+      <h2><span class="n">03</span>100위 밖<em>두 가지 예외</em></h2>
+      <p><b>R4 직책</b>이면 전쟁 준비 점수가 하나도 없어도 언제든 참여할 수 있습니다. 단 <b>6-10위만</b> 가능하고 횟수는 무제한입니다.</p>
+      <p><b>미스틱 트라이얼 20위 이내</b>라면 점수가 없어도 참여할 수 있습니다. 단 <b>1-5위만</b> 가능하고 주기당 <b>2회</b>입니다.</p>
+      <p>둘 다 해당하지 않으면 기본 임무 보상만 받을 수 있습니다.</p>
+    </section>
+
+    <section>
+      <h2><span class="n">04</span>순서 계산</h2>
+      <p><b>1　우선순위</b>　전쟁 준비 순위 ＞ R4 ＞ 미스틱 20위. 같은 순위를 두고 여러 명이 경쟁할 때 누가 먼저 올라가는지의 순서입니다.</p>
+      <p><b>2　중복 불가</b>　한 사람은 한 등급으로만 정산합니다. 등급이 겹치면 높은 쪽으로 계산합니다. 예: 50위와 100위에 동시에 해당하면 50위 기준.</p>
+      <p><b>3　유일한 예외</b>　전쟁 준비 점수가 없으면서 <b>R4이자 미스틱 20위 이내</b>인 경우, 두 혜택 중 <b>하나를 직접 선택</b>합니다. R4를 고르면 6-10위 무제한, 미스틱을 고르면 1-5위 주기당 2회입니다. 선택한 등급으로 정산합니다.</p>
+      <p><b>4　확정 순위가 필요할 때</b>　예를 들어 「小鸡」이 현재 2위인데 「深渊」이 1위가 필요하면, 정산 하루 전에 사전 보고 후 협의합니다. “이번에 深渊이 1위가 필요합니다. 이번만 2위로 양보해 주실 수 있나요?” 합의된 결과는 하루 전에 공지해 두고, 정산 직전에 다투지 않도록 합니다.</p>
+      <p>횟수는 KvK 주기 기준이며 달력 월 기준이 아닙니다.</p>
+    </section>
+
+    <section>
+      <h2><span class="n">05</span>위반 제재<em>단계적 강화</em></h2>
+      <p>허용된 순위를 벗어나거나, 배정 없이 10위 이내를 차지한 경우 아래 3단계로 처리합니다. <b>같은 주기 안에서 반복되면 단계가 올라갑니다.</b></p>
+      <div class="steps">
+        <div class="step s1"><div class="b">1</div><div class="body"><div class="t">경고 및 동맹 2일 추방</div><div class="d">1차 위반</div></div></div>
+        <div class="step s2"><div class="b">2</div><div class="body"><div class="t">점수가 다시 변동되면 성 1-3회 공격</div><div class="d">2차 위반</div></div></div>
+        <div class="step s3"><div class="b">3</div><div class="body"><div class="t">점수가 또 변동되면 납득할 때까지 공격</div><div class="d">3차 위반 · 횟수 제한 없음</div></div></div>
+      </div>
+      <div class="note">판정 근거: 정산 전후 랭킹 캡처 비교. 승인되지 않은 점수 상승은 위반으로 봅니다. 이의가 있으면 정산 당일에 단체 채팅방에서 제기하고, 이후에는 번복하지 않습니다.</div>
+    </section>
+
+    <section>
+      <h2><span class="n">06</span>기타</h2>
+      <p>11위 이후는 <b>자유 참여</b>입니다. 배정도, 평가도 없고 기본 임무 보상만 채우면 됩니다.</p>
+      <p>횟수를 다 쓴 뒤에도 참여할 수 있지만 <b>11위 이후</b>에만 들어갈 수 있습니다.</p>
+      <p>매 정산 후 순위를 확인하며, 허용 범위를 벗어나면 위 3단계 제재를 적용합니다.</p>
+    </section>
+
+    <div class="foot">K761 동맹 운영 · 등급 판정은 주기마다 보관된 전쟁 준비 랭킹 캡처가 유일한 근거입니다</div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var KEY = 'k761-lang';
+  var btns = document.querySelectorAll('.lang-switch button');
+  var blocks = document.querySelectorAll('.lang');
+  var titles = {
+    zh: 'K761 小榜上分规则',
+    en: 'K761 Mini Leaderboard Rules',
+    kr: 'K761 소규모 랭킹 규칙'
+  };
+  var langs = { zh: 'zh-CN', en: 'en', kr: 'ko' };
+
+  function setLang(l, remember){
+    if(!titles[l]) l = 'zh';
+    for(var i=0;i<blocks.length;i++){
+      blocks[i].classList.toggle('on', blocks[i].getAttribute('data-lang') === l);
+    }
+    for(var j=0;j<btns.length;j++){
+      var on = btns[j].getAttribute('data-set') === l;
+      btns[j].classList.toggle('on', on);
+      btns[j].setAttribute('aria-selected', on ? 'true' : 'false');
+    }
+    document.documentElement.lang = langs[l];
+    document.title = titles[l];
+    if(remember !== false){ try{ localStorage.setItem(KEY, l); }catch(e){} }
+  }
+
+  for(var k=0;k<btns.length;k++){
+    btns[k].addEventListener('click', function(){
+      setLang(this.getAttribute('data-set'));
+    });
+  }
+
+  var saved = null;
+  try{ saved = localStorage.getItem(KEY); }catch(e){}
+  if(saved){ setLang(saved, false); }
+
+  /* 字体切换：黑体 → 宋体 → 等线 */
+  var FONTS = [
+    { k:'sans',  n:'黑体' },
+    { k:'serif', n:'宋体' },
+    { k:'deng',  n:'等线' }
+  ];
+  var FKEY = 'k761-font';
+  var fontBtn = document.getElementById('fontBtn');
+
+  function setFont(k, remember){
+    var idx = 0;
+    for(var i=0;i<FONTS.length;i++){ if(FONTS[i].k === k) idx = i; }
+    document.body.setAttribute('data-font', FONTS[idx].k);
+    fontBtn.innerHTML = '<span>Aa</span>' + FONTS[idx].n;
+    if(remember !== false){ try{ localStorage.setItem(FKEY, FONTS[idx].k); }catch(e){} }
+  }
+
+  fontBtn.addEventListener('click', function(){
+    var cur = document.body.getAttribute('data-font') || 'sans';
+    var idx = 0;
+    for(var i=0;i<FONTS.length;i++){ if(FONTS[i].k === cur) idx = i; }
+    setFont(FONTS[(idx + 1) % FONTS.length].k);
+  });
+
+  var savedFont = null;
+  try{ savedFont = localStorage.getItem(FKEY); }catch(e){}
+  setFont(savedFont || 'sans', false);
+})();
+</script>
+</body>
+</html>
